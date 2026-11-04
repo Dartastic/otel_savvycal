@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_savvycal_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_savvycal';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class SavvycalResult {
+  /// Creates a result.
   const SavvycalResult({
     this.itemCount,
     this.linkKind,
@@ -46,8 +47,13 @@ class SavvycalResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class SavvycalCallResult<T> {
+  /// Creates a call result.
   const SavvycalCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final SavvycalResult? result;
 }
@@ -76,56 +82,56 @@ Future<T> tracedSavvycal<T>({
   final span = _tracer().startSpan(
     'savvycal $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
     if (r.result != null) {
       final extras = <Attribute<Object>>[];
       if (r.result!.itemCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'savvycal.item_count',
           r.result!.itemCount!,
         ));
       }
       if (r.result!.linkKind != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'savvycal.link.kind',
           r.result!.linkKind!,
         ));
       }
       if (r.result!.status != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'savvycal.status',
           r.result!.status!,
         ));
       }
       if (r.result!.rankedAvailability != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'savvycal.ranked_availability',
           r.result!.rankedAvailability!,
         ));
       }
       if (r.result!.pollResponses != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'savvycal.poll.responses_count',
           r.result!.pollResponses!,
         ));
       }
       if (r.result!.tier != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'savvycal.tier',
           r.result!.tier!,
         ));
       }
       if (r.result!.requestId != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'savvycal.request.id',
           r.result!.requestId!,
         ));
       }
       if (r.result!.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           r.result!.statusCode!,
         ));
@@ -136,13 +142,13 @@ Future<T> tracedSavvycal<T>({
           );
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
